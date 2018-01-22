@@ -1,2 +1,2 @@
 # Battlebot
-Battlebot project with the robot and controller
+Battlebot project with robot and controller
