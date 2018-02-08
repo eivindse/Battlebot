@@ -17,8 +17,8 @@ int turn = 0;
 // P I N S
 int RIGHT_ENABLE = 3;
 int RIGHT_FORWARD = 4;
-int RIGHT_BACKWARD = 6;
-int LEFT_ENABLE = 5;
+int RIGHT_BACKWARD = 5;
+int LEFT_ENABLE = 6;
 int LEFT_FORWARD = 8;
 int LEFT_BACKWARD = 7;
 int LAZER = 2;
