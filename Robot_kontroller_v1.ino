@@ -3,16 +3,17 @@
 #include "SPI.h"
 
 // V A R I A B L E S
-int DirX = 0;
-int DirY = 0;
-int sendByte = 0;
+int sendArray[5];
 
 // P I N S
-int pinX = 2;
-int pinY = 0;
-int pinTrigger = 2;
+int pinLeftY = 0;
+int pinLeftX = 1;
+int pinRightY = 5;
+int pinRightX = 6;
+int pinTrigger = 3;
 
-RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the NANO
+RF24 radio(9, 10); 
+
 const uint64_t pipe = 0xE6E6E6E6E6E6; // Needs to be the same for communicating between 2 NRF24L01 
 
 void setup(void){
@@ -21,30 +22,43 @@ void setup(void){
 
     pinMode(pinTrigger, INPUT_PULLUP);
 
-   if (!radio.begin()) {
+    if (!radio.begin()) {
       Serial.println("Begin false!!");
     } else {
       Serial.println("Stash");
     }
     radio.setChannel(95);
-    radio.openWritingPipe(pipe); // Get NRF24L01 ready to transmit
+    radio.openWritingPipe(pipe); 
 }
 
 void loop(void) {
-    /* Read inputs and shift bits in place. */
-    DirX = analogRead(2);
-    DirY = analogRead(0);
-    DirX = map(DirX,0,1023,0,9);
-    DirY = map(DirY,0,1023,9,0);
+  
+    sendArray[0] = analogRead(pinLeftY);
+    //Serial.println(sendArray[0]);
 
-    sendByte = 10*DirX + DirY;
-    
-    radio.write(&sendByte, sizeof(sendByte));
-    //radio.write(&DirX, sizeof(DirX));
+    sendArray[1] = analogRead(pinLeftX);
+    //Serial.print(sendArray[1]);
+   
+    sendArray[2] = analogRead(pinRightY);
+    //Serial.print(sendArray[2]);
 
-    //Serial.println(DirX);
-    Serial.println(sendByte);
-    //Serial.println(DirY);
+    sendArray[3] = analogRead(pinRightX);
+    //Serial.print(sendArray[3]);
+   
+    sendArray[4] = digitalRead(pinTrigger);
+    //Serial.print(sendArray[4]);
+
+    sendArray[0] = map(sendArray[0],0,1023,-10,10);
+    sendArray[1] = map(sendArray[1],0,1023,-10,10);
+    sendArray[2] = map(sendArray[2],0,1023, 10,-10);
+    sendArray[3] = map(sendArray[3],0,1023,-10,10);
+
+    for(int i = 0; i<4; i++){
+        if(abs(sendArray[i])<=2){
+            sendArray[i] = 0;
+        } 
+        //Serial.println(sendArray[i]); 
+    }
     
-    delay(100);
+    radio.write(&sendArray, sizeof(sendArray));
 }
