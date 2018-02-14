@@ -1,64 +1,91 @@
-#include "nRF24L01.h" //NRF24L01 library created by TMRh20 https://github.com/TMRh20/RF24
+#include "nRF24L01.h" // NRF24L01 library created by TMRh20 https://github.com/TMRh20/RF24
 #include "RF24.h"
 #include "SPI.h"
 
+/* Arduino / Radio code*/
+
+RF24 radio(9, 10);
+const uint64_t pipe = 0xE6E6E6E6E6E6;
+
 // V A R I A B L E S
-int sendArray[5];
+int movement[5];
+int DirX = 0;
+int DirY = 0;
+int speeds = 0;
+int turn = 0;
 
 // P I N S
-int pinLeftY = 0;
-int pinLeftX = 1;
-int pinRightY = 5;
-int pinRightX = 6;
-int pinTrigger = 3;
+int RIGHT_ENABLE = 3;
+int RIGHT_FORWARD = 4;
+int RIGHT_BACKWARD = 6;
+int LEFT_ENABLE = 5;
+int LEFT_FORWARD = 8;
+int LEFT_BACKWARD = 7;
+int LAZER = 2;
 
-RF24 radio(9, 10); 
-
-const uint64_t pipe = 0xE6E6E6E6E6E6; // Needs to be the same for communicating between 2 NRF24L01 
-
-void setup(void){
+void setup(void) {
     Serial.begin(9600);
     Serial.println("Startup");
-
-    pinMode(pinTrigger, INPUT_PULLUP);
-
-    if (!radio.begin()) {
+    
+   if (!radio.begin()) {
       Serial.println("Begin false!!");
     } else {
       Serial.println("Stash");
     }
     radio.setChannel(95);
-    radio.openWritingPipe(pipe); 
+    radio.openReadingPipe(1, pipe); // Get NRF24L01 ready to receive
+    radio.startListening(); // Listen to see if information received
+
+    pinMode(2, OUTPUT);
+    pinMode(3, OUTPUT);
+    pinMode(4, OUTPUT);
+    pinMode(5, OUTPUT);
+    pinMode(6, OUTPUT);
+    pinMode(7, OUTPUT);
+    pinMode(8, OUTPUT);
+    
 }
 
 void loop(void) {
   
-    sendArray[0] = analogRead(pinLeftY);
-    //Serial.println(sendArray[0]);
-
-    sendArray[1] = analogRead(pinLeftX);
-    //Serial.print(sendArray[1]);
-   
-    sendArray[2] = analogRead(pinRightY);
-    //Serial.print(sendArray[2]);
-
-    sendArray[3] = analogRead(pinRightX);
-    //Serial.print(sendArray[3]);
-   
-    sendArray[4] = digitalRead(pinTrigger);
-    //Serial.print(sendArray[4]);
-
-    sendArray[0] = map(sendArray[0],0,1023,-10,10);
-    sendArray[1] = map(sendArray[1],0,1023,-10,10);
-    sendArray[2] = map(sendArray[2],0,1023, 10,-10);
-    sendArray[3] = map(sendArray[3],0,1023,-10,10);
-
-    for(int i = 0; i<4; i++){
-        if(abs(sendArray[i])<=2){
-            sendArray[i] = 0;
-        } 
-        //Serial.println(sendArray[i]); 
+    while (radio.available()) {
+    radio.read(&movement, sizeof(movement));
+    
+        for(int i = 0;i<4;i++){
+           //Serial.print(movement[i]);
+        }
     }
     
-    radio.write(&sendArray, sizeof(sendArray));
+    speeds = movement[2];
+    turn = movement[1];
+    
+    if( speeds > 0 ){
+
+      digitalWrite(RIGHT_FORWARD, HIGH);
+      digitalWrite(RIGHT_BACKWARD, LOW);
+      analogWrite(RIGHT_ENABLE, 25*abs(speeds-turn));
+      digitalWrite(LEFT_FORWARD, HIGH);
+      digitalWrite(LEFT_BACKWARD, LOW);
+      analogWrite(LEFT_ENABLE, 25*abs(speeds+turn));
+    }
+    else if( speeds < 0 ){ 
+      speeds=abs(speeds);
+      digitalWrite(RIGHT_FORWARD, LOW);
+      digitalWrite(RIGHT_BACKWARD, HIGH);
+      analogWrite(RIGHT_ENABLE, 25*abs(speeds-turn));
+      digitalWrite(LEFT_FORWARD, LOW);
+      digitalWrite(LEFT_BACKWARD, HIGH);
+      analogWrite(LEFT_ENABLE, 25*abs(speeds+turn));
+    }
+    else {
+      digitalWrite(RIGHT_FORWARD, HIGH);
+      digitalWrite(RIGHT_BACKWARD, HIGH);
+      digitalWrite(LEFT_FORWARD, LOW);
+      digitalWrite(LEFT_BACKWARD, LOW);
+    }
+
+    //Serial.println(speeds+turn);
+    //Serial.println(speeds-turn);
+    //Serial.println(speeds);
+    //Serial.println(turn);
 }
