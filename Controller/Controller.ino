@@ -10,7 +10,7 @@ int pinLeftY = 0;
 int pinLeftX = 1;
 int pinRightY = 5;
 int pinRightX = 6;
-int pinTrigger = 3;
+int pinTrigger = 4;
 
 RF24 radio(9, 10); 
 
@@ -46,7 +46,7 @@ void loop(void) {
     //Serial.print(sendArray[3]);
    
     sendArray[4] = digitalRead(pinTrigger);
-    //Serial.print(sendArray[4]);
+    //Serial.println(sendArray[4]);
 
     sendArray[0] = map(sendArray[0],0,1023,-10,10);
     sendArray[1] = map(sendArray[1],0,1023,-10,10);
